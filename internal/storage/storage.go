@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -24,7 +25,7 @@ func New(databaseUri string) (*Storage, error) {
 }
 
 // AddNotification - метод, добавляющий уведомление в БД
-func (s *Storage) AddNotice(ctx context.Context) error {
+func (s *Storage) AddNotice(ctx context.Context, notice model.Notice) error {
 
 	return nil
 }
