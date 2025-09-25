@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 

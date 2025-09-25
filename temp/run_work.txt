@@ -6,6 +6,8 @@ migrate -path /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps -database "post
 
 migrate -path /c/KKO11/Golang/Gavrilin/cloud_market/db/dumps -database "postgres://localhost:5432/delayed_notifier?sslmode=disable&user=postgres&password=password" down
 
+docker run -d --name vpostgres -p 5440:5432 -e POSTGRES_USER=vladimir -e POSTGRES_PASSWORD="password" -e POSTGRES_DB="delayed_notifier" postgres:latest
+
 _____________________________________________________________
 
 Миграции на домашнем Маке
@@ -44,18 +46,3 @@ PGLOCALEDIR="" migrate -database "postgres://localhost:7701/cloud_market?sslmode
 
 
 
-Для тестовой базы:
-
-migrate -path /c/KKO11/Golang/revelio/revelio_mainServer/internal/migrations -database "postgres://localhost:5432/revelioTest?sslmode=disable&user=postgres&password=password" up
-migrate -path /c/KKO11/Golang/revelio/revelio_mainServer/internal/migrations -database "postgres://localhost:5432/revelioTest?sslmode=disable&user=postgres&password=password" down
-
-
-psql -h localhost -p 5434 -U postgres -d revelio
-
-Компиляция и запуск:
-
-cd /c/KKO11/Golang/revelio/revelio_mainServer/cmd/revelio_mainServer && go build && start revelio_mainServer
-
-Запуск:
-
-cd /c/KKO11/Golang/revelio/revelio_mainServer/cmd/revelio_mainServer && start revelio_mainServer
