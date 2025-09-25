@@ -25,7 +25,7 @@ func New(databaseUri string) (*Storage, error) {
 	}, nil
 }
 
-// AddNotification - метод, добавляющий уведомление в БД
+// AddNotice - метод, добавляющий уведомление в БД
 func (s *Storage) AddNotice(ctx context.Context, notice model.Notice) error {
 
 	return nil
