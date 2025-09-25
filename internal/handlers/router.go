@@ -27,4 +27,7 @@ func (r *Router) Routers() {
 func (r *Router) addNotice(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": "order UID is required"})
 
+	notice := 0
+	c.
+		r.store.AddNotice()
 }
