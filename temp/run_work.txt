@@ -4,27 +4,29 @@ migrate create -ext sql -dir /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps 
 
 migrate -path /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps -database "postgres://localhost:5432/delayed_notifier?sslmode=disable&user=postgres&password=password" up
 
-migrate -path /c/KKO11/Golang/Gavrilin/cloud_market/db/dumps -database "postgres://localhost:5432/delayed_notifier?sslmode=disable&user=postgres&password=password" down
+migrate -path /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps -database "postgres://localhost:5432/delayed_notifier?sslmode=disable&user=postgres&password=password" down
 
+
+ЗАПУСК в ДОКЕРЕ________№№№№№№№№_________
 docker run -d --name vpostgres -p 5440:5432 -e POSTGRES_USER=vladimir -e POSTGRES_PASSWORD="password" -e POSTGRES_DB="delayed_notifier" postgres:latest
 
 _____________________________________________________________
 
 Миграции на домашнем Маке
 
-migrate create -ext sql -dir /Users/mac/Dev/WBTech/cloud_market/db/dumps -seq tables
+migrate create -ext sql -dir /Users/mac/Dev/WBTech/Delayed_Notifier/db/dumps -seq tables
 
-migrate -path /Users/mac/Dev/WBTech/cloud_market/db/dumps -database "postgres://localhost:7701/cloud_market?sslmode=disable&user=postgres&password=password" up
+migrate -path /Users/mac/Dev/WBTech/Delayed_Notifier/db/dumps -database "postgres://localhost:5440/delayed_notifier?sslmode=disable&user=postgres&password=password" up
 
-migrate -path /Users/mac/Dev/WBTech/cloud_market/db/dumps -database "postgres://localhost:5433/cloud_market?sslmode=disable&user=postgres&password=password" down
+migrate -path /Users/mac/Dev/WBTech/Delayed_Notifier/db/dumps -database "postgres://localhost:5440/delayed_notifier?sslmode=disable&user=postgres&password=password" down
 
 _______________________________________________________________
 Миграции на домашнем Маке:
  ***РАБОЧИЙ ВАРИК с УЧЕТОМ ошибок переменной окружения  (PGLOCALEDIR=/Library/PostgreSQL/17/share/locale)***
 
- env -u PGLOCALEDIR migrate -database "postgres://localhost:7701/cloud_market?sslmode=disable&user=postgres&password=password" -path /Users/mac/Dev/WBTech/cloud_market/db/dumps up
+ env -u PGLOCALEDIR migrate -database "postgres://localhost:5440/delayed_notifier?sslmode=disable&user=vladimir&password=password" -path /Users/mac/Dev/WBTech/Delayed_Notifier/db/dumps up
 
- env -u PGLOCALEDIR migrate -database "postgres://localhost:7701/cloud_market?sslmode=disable&user=postgres&password=password" -path /Users/mac/Dev/WBTech/cloud_market/db/dumps down
+ env -u PGLOCALEDIR migrate -database "postgres://localhost:5440/delayed_notifier?sslmode=disable&user=vladimir&password=password" -path /Users/mac/Dev/WBTech/Delayed_Notifier/db/dumps down
 _______________________________________________________________
 *********KAFKA**********
 
