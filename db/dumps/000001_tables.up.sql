@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE TABLE IS NOT EXISTS notifications(
+CREATE TABLE IF NOT EXISTS notifications(
     id SERIAL PRIMARY KEY,
     notice_uid TEXT,
     body TEXT,

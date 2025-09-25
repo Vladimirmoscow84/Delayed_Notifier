@@ -1,5 +1,5 @@
 BEGIN;
 
-DROP TABLE IS EXISTS notifications;
+DROP TABLE IF EXISTS notifications;
 
 COMMIT;
