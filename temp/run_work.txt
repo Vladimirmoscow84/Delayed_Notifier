@@ -2,9 +2,16 @@
 
 migrate create -ext sql -dir /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps -seq tables
 
-migrate -path /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps -database "postgres://localhost:5432/delayed_notifier?sslmode=disable&user=postgres&password=password" up
+migrate -path /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps -database "postgres://localhost:5440/delayed_notifier?sslmode=disable&user=vladimir&password=password" up
 
-migrate -path /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps -database "postgres://localhost:5432/delayed_notifier?sslmode=disable&user=postgres&password=password" down
+migrate -path /c/KKO11/Golang/Gavrilin/Delayed_Notifier/db/dumps -database "postgres://localhost:5440/delayed_notifier?sslmode=disable&user=vladimir&password=password" down
+_________Проверка таблиц в контйнере vpostgres____________________
+docker exec -it vpostgres psql -U vladimir -l
+
+docker exec -it vpostgres psql -U vladimir -d delayed_notifier -c "\dt"
+
+docker exec -it vpostgres psql -U vladimir -d delayed_notifier \
+	-c "SELECT * FROM notifications LIMIT 10"
 
 
 __________________ЗАПУСК в ДОКЕРЕ___________
