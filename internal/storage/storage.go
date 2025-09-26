@@ -68,7 +68,7 @@ func (s *Storage) GetNotice(ctx context.Context, id int) (model.Notice, error) {
 	var notice model.Notice
 
 	row := s.DB.QueryRowContext(ctx, `
-	SELECT id, body, date_created, send_date, sent_attempts, send_status 
+	SELECT id, body, date_created, send_date, send_attempts, send_status 
 	FROM notifications WHERE id = $1;
 	`, id)
 	err := row.Scan(notice.Id, notice.Body, notice.DateCreated, notice.SendDate, notice.SendAttempts, notice.SendStatus)
@@ -84,4 +84,28 @@ func (s *Storage) GetNotice(ctx context.Context, id int) (model.Notice, error) {
 func (s *Storage) GetNoticies(ctx context.Context) ([]model.Notice, error) {
 	var notics []model.Notice
 
+	rows, err := s.DB.QueryContext(ctx, `
+		SELECT id, body, date_created, send_date, send_attempts, send_status FROM notifications
+	`)
+	if err != nil {
+		log.Printf("get notices error %v", err)
+		return []model.Notice{}, fmt.Errorf("failed to scan rows: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var notice model.Notice
+		err := rows.Scan(&notice.Id, &notice.Body, &notice.DateCreated, &notice.SendDate, &notice.SendAttempts, &notice.SendStatus)
+		if err != nil {
+			log.Printf("scan row error %v", err)
+			continue //пропускаем ошибку
+		}
+		notics = append(notics, notice)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to scan rows: %w", err)
+	}
+
+	return notics, nil
 }
