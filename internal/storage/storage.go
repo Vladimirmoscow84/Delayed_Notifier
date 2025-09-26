@@ -50,10 +50,14 @@ func (s *Storage) DeleteNotice(ctx context.Context, id int) error {
 		log.Printf("error deleting from base %v", err)
 		return fmt.Errorf("error deleting from base %v", err)
 	}
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting affected rows count: %v", err)
+		return fmt.Errorf("error retrieving affected row count: %w", err)
+	}
 	if rowsAffected == 0 {
-		log.Printf("is not notices with this id %v", err)
-		return fmt.Errorf("is not notices with this id %v", err)
+		log.Printf("is not notices with this id = %v", id)
+		return fmt.Errorf("is not notices with this id = %v", id)
 	}
 
 	return nil
