@@ -62,3 +62,26 @@ func (s *Storage) DeleteNotice(ctx context.Context, id int) error {
 
 	return nil
 }
+
+// GetNotice - метод для получения одной записи из БД
+func (s *Storage) GetNotice(ctx context.Context, id int) (model.Notice, error) {
+	var notice model.Notice
+
+	row := s.DB.QueryRowContext(ctx, `
+	SELECT id, body, date_created, send_date, sent_attempts, send_status 
+	FROM notifications WHERE id = $1;
+	`, id)
+	err := row.Scan(notice.Id, notice.Body, notice.DateCreated, notice.SendDate, notice.SendAttempts, notice.SendStatus)
+	if err != nil {
+		log.Printf("get notice error %v", err)
+		return model.Notice{}, fmt.Errorf("failed to scan row: %w", err)
+	}
+
+	return notice, nil
+}
+
+// GetNiticies - метод для получения всех записей из БД{
+func (s *Storage) GetNoticies(ctx context.Context) ([]model.Notice, error) {
+	var notics []model.Notice
+
+}
