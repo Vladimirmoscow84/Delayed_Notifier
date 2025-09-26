@@ -26,19 +26,24 @@ func New(databaseUri string) (*Storage, error) {
 	}, nil
 }
 
-// AddNotice - метод, добавляющий уведомление в БД
-func (s *Storage) AddNotice(ctx context.Context, notice model.Notice) error {
-	_, err := s.DB.ExecContext(ctx, `
+// AddNotice - метод, добавляющий уведомление в БД и возвращения id фронту
+func (s *Storage) AddNotice(ctx context.Context, notice model.Notice) (int, error) {
+
+	row := s.DB.QueryRowContext(ctx, `
 		INSERT INTO notifications
 			(body, date_created, send_date, send_attempts, send_status)
 		VALUES
-		($1,$2,$3,$4,$5);
+		($1,$2,$3,$4,$5) 
+		RETURNING id;
 		`, notice.Body, notice.DateCreated, notice.SendDate, notice.SendAttempts, notice.SendStatus)
+
+	var noticeId int
+	err := row.Scan(&noticeId)
 	if err != nil {
 		log.Printf("error adding to base %v", err)
-		return fmt.Errorf("error adding to base %v", err)
+		return 0, fmt.Errorf("error adding to base %v", err)
 	}
-	return nil
+	return noticeId, nil
 }
 
 // DeleteNotice - метод, удаляющий запись из БД

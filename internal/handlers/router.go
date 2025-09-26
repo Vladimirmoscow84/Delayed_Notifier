@@ -21,7 +21,9 @@ func New(router *ginext.Engine, store *storage.Storage) *Router {
 }
 
 func (r *Router) Routers() {
-	r.Router.POST("/add_notice", r.addNotice)
+	r.Router.POST("/notify", r.addNotice)
+	//r.Router.Get("/notify/:id", r.getStatus)
+	//r.Router.Delete("/notify/:id", r.deleteNotice)
 }
 
 func (r *Router) addNotice(c *gin.Context) {
