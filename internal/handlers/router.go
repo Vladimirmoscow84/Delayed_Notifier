@@ -18,7 +18,7 @@ func New(router *ginext.Engine, store *storage.Storage) *Router {
 }
 
 func (r *Router) Routers() {
-	r.Router.POST("/notify", r.addNotice)
-	//r.Router.Get("/notify/:id", r.getStatus)
-	//r.Router.Delete("/notify/:id", r.deleteNotice)
+	r.Router.POST("/notify", r.addNotice)    //создание уведомлений с датой и временем отправки
+	r.Router.GET("/notify/:id", r.getStatus) //получение статуса уведомления
+	//r.Router.DELETE("/notify/:id", r.deleteNotice) //отмена запланированного уведомления
 }
