@@ -12,7 +12,7 @@ func (r *Router) getStatus(c *gin.Context) {
 	ctx := c.Request.Context()
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	if err != nil && id <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or missing ID parametr of notice"})
 		return
 	}
