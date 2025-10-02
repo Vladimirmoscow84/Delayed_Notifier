@@ -5,24 +5,29 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/wb-go/wbf/redis"
 )
 
-// структура для работы с БД
+// структура для работы с БД и кешем
 type Storage struct {
-	DB *sqlx.DB
+	DB    *sqlx.DB
+	Cache *cache.Cache
 }
 
 // New - конструктор для создания экземпляра Storage
-func New(databaseUri string) (*Storage, error) {
+func New(databaseUri string, rdAddr string) (*Storage, error) {
 	db, err := sqlx.Connect("pgx", databaseUri)
 	if err != nil {
 		log.Fatalf("connection to DB error %v", err)
 	}
+	rd := redis.New(rdAddr, "", 0)
 	return &Storage{
-		DB: db,
+		DB:    db,
+		Cache: cache.NewCache(rd),
 	}, nil
 }
 
