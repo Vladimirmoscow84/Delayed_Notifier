@@ -3,7 +3,9 @@ package app
 import (
 	"log"
 
+	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/handlers"
+	datasaver "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_saver"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/storage"
 	wbconfig "github.com/wb-go/wbf/config"
 	wbgin "github.com/wb-go/wbf/ginext"
@@ -18,18 +20,22 @@ func Run() {
 	}
 	databaseUri := cfg.GetString("DATABASE_URI")
 	addr := cfg.GetString("SERVER_ADDRESS")
+	redisUri := cfg.GetString("REDIS_URI")
 
-	router := wbgin.New()
+	wbRouter := wbgin.New()
 
 	store, err := storage.New(databaseUri)
 	if err != nil {
 		log.Fatalf("dissable connet to storage %v", err)
 	}
+	cache := cache.New(redisUri)
 
-	handls := handlers.New(router, store)
-	handls.Routers()
+	dataSaverService := datasaver.New(store, cache)
 
-	err = handls.Router.Run(addr)
+	router := handlers.New(wbRouter, store)
+	router.Routers()
+
+	err = router.Router.Run(addr)
 	if err != nil {
 		log.Fatalf("connet to server dissadled %v", err)
 	}

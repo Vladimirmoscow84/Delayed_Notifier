@@ -1,19 +1,24 @@
 package handlers
 
 import (
-	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/storage"
+	"context"
+
+	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
 	"github.com/wb-go/wbf/ginext"
 )
 
+type service interface {
+	SaveData(ctx context.Context, notice model.Notice) (int, error)
+}
 type Router struct {
-	Router *ginext.Engine
-	store  *storage.Storage
+	Router  *ginext.Engine
+	service service
 }
 
-func New(router *ginext.Engine, store *storage.Storage) *Router {
+func New(router *ginext.Engine, service service) *Router {
 	return &Router{
-		Router: router,
-		store:  store,
+		Router:  router,
+		service: service,
 	}
 }
 
