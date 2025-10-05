@@ -20,11 +20,10 @@ func Run() {
 	}
 	databaseUri := cfg.GetString("DATABASE_URI")
 	addr := cfg.GetString("SERVER_ADDRESS")
-	redisUri := cfg.GetString("REDIS_URI")
 
 	wbRouter := wbgin.New()
 
-	store, err := storage.New(databaseUri)
+	store, err := storage.New(databaseUri, rdAddr)
 	if err != nil {
 		log.Fatalf("dissable connet to storage %v", err)
 	}

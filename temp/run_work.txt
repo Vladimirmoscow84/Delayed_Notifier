@@ -16,9 +16,6 @@ docker exec -it vpostgres psql -U vladimir -d delayed_notifier \
 
 __________________ЗАПУСК в ДОКЕРЕ___________
 docker run -d --name vpostgres -p 5440:5432 -e POSTGRES_USER=vladimir -e POSTGRES_PASSWORD="password" -e POSTGRES_DB="delayed_notifier" postgres:latest
-
-
-docker run -d --name redis-go -p 6379:6379 redis
 _____________________________________________________________
 
 
