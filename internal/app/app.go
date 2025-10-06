@@ -6,6 +6,7 @@ import (
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/handlers"
 	datasaver "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_saver"
+	statusgetter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/status_getter"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/storage"
 	wbconfig "github.com/wb-go/wbf/config"
 	wbgin "github.com/wb-go/wbf/ginext"
@@ -31,8 +32,9 @@ func Run() {
 	cache := cache.New(redisUri)
 
 	dataSaverService := datasaver.New(store, cache)
+	statusGetterService := statusgetter.New(cache)
 
-	router := handlers.New(wbRouter, store)
+	router := handlers.New(wbRouter, dataSaverService, statusGetterService)
 	router.Routers()
 
 	err = router.Router.Run(addr)
