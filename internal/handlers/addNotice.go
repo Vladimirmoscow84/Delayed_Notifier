@@ -22,7 +22,7 @@ func (r *Router) addNotice(c *gin.Context) {
 	notice.SendAttempts = 5
 	notice.SendStatus = "sheduled"
 
-	id, err := r.service.SaveData(ctx, notice)
+	id, err := r.dataSaver.SaveData(ctx, notice)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

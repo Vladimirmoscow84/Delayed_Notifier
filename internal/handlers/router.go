@@ -7,18 +7,23 @@ import (
 	"github.com/wb-go/wbf/ginext"
 )
 
-type service interface {
+type dataSaver interface {
 	SaveData(ctx context.Context, notice model.Notice) (int, error)
 }
+type statusGetter interface {
+	GetStatusNotice(ctx context.Context, id string) (string, error)
+}
 type Router struct {
-	Router  *ginext.Engine
-	service service
+	Router       *ginext.Engine
+	dataSaver    dataSaver
+	statusGetter statusGetter
 }
 
-func New(router *ginext.Engine, service service) *Router {
+func New(router *ginext.Engine, dataSaver dataSaver, statusGetter statusGetter) *Router {
 	return &Router{
-		Router:  router,
-		service: service,
+		Router:       router,
+		dataSaver:    dataSaver,
+		statusGetter: statusGetter,
 	}
 }
 
