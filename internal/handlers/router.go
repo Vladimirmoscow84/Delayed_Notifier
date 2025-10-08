@@ -13,17 +13,22 @@ type dataSaver interface {
 type statusGetter interface {
 	GetStatusNotice(ctx context.Context, id string) (string, error)
 }
+type dataDeleter interface {
+	DeleteData(ctx context.Context, id string) error
+}
 type Router struct {
 	Router       *ginext.Engine
 	dataSaver    dataSaver
 	statusGetter statusGetter
+	dataDeleter  dataDeleter
 }
 
-func New(router *ginext.Engine, dataSaver dataSaver, statusGetter statusGetter) *Router {
+func New(router *ginext.Engine, dataSaver dataSaver, statusGetter statusGetter, dataDeleter dataDeleter) *Router {
 	return &Router{
 		Router:       router,
 		dataSaver:    dataSaver,
 		statusGetter: statusGetter,
+		dataDeleter:  dataDeleter,
 	}
 }
 

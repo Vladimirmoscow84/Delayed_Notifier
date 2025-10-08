@@ -5,6 +5,7 @@ import (
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/handlers"
+	datadeleter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_deleter"
 	datasaver "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_saver"
 	statusgetter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/status_getter"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/storage"
@@ -15,7 +16,7 @@ import (
 func Run() {
 	//ctx := context.Background()
 	cfg := wbconfig.New()
-	err := cfg.Load("../.env")
+	err := cfg.Load("", "../.env", "")
 	if err != nil {
 		log.Fatalf("load cfg dissable %v", err)
 	}
@@ -23,7 +24,7 @@ func Run() {
 	addr := cfg.GetString("SERVER_ADDRESS")
 	redisUri := cfg.GetString("REDIS_URI")
 
-	wbRouter := wbgin.New()
+	wbRouter := wbgin.New("release")
 
 	store, err := storage.New(databaseUri)
 	if err != nil {
@@ -33,8 +34,9 @@ func Run() {
 
 	dataSaverService := datasaver.New(store, cache)
 	statusGetterService := statusgetter.New(cache)
+	dataDeleterService := datadeleter.New(cache)
 
-	router := handlers.New(wbRouter, dataSaverService, statusGetterService)
+	router := handlers.New(wbRouter, dataSaverService, statusGetterService, dataDeleterService)
 	router.Routers()
 
 	err = router.Router.Run(addr)

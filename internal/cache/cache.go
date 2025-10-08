@@ -31,3 +31,8 @@ func (c *Cache) Get(ctx context.Context, key string) (string, error) {
 func (c *Cache) Set(ctx context.Context, key string, value any) error {
 	return c.client.SetWithRetry(ctx, c.strategy, key, value)
 }
+
+// Del - удаляет значение из кэш
+func (c *Cache) Del(ctx context.Context, key string) error {
+	return c.client.Del(ctx, key)
+}

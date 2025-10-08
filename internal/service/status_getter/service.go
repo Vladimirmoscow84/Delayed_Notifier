@@ -8,12 +8,11 @@ import (
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
 )
 
-type StatusGetter struct {
-	cache cache
-}
-
 type cache interface {
 	Get(ctx context.Context, key string) (string, error)
+}
+type StatusGetter struct {
+	cache cache
 }
 
 func New(c cache) *StatusGetter {
