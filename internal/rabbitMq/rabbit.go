@@ -167,7 +167,7 @@ func (c *Client) Publish(msg Message) error {
 func (c *Client) PublishStruct(data interface{}, ttl time.Duration) error {
 	body, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("failed to marshal struct: %w", err)
+		return fmt.Errorf("[RabbitMQ]failed to marshal struct: %w", err)
 	}
 	return c.Publish(Message{Body: body, TTL: ttl})
 }
@@ -208,7 +208,7 @@ func (c *Client) ConsumeDLQWithWorkers(ctx context.Context, workerCount int, han
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to consume from DLQ: %w", err)
+		return fmt.Errorf("[RabbitMQ]failed to consume from DLQ: %w", err)
 	}
 
 	queue := make(chan amqp.Delivery, workerCount*2)
