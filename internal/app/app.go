@@ -23,6 +23,7 @@ func Run() {
 	databaseUri := cfg.GetString("DATABASE_URI")
 	addr := cfg.GetString("SERVER_ADDRESS")
 	redisUri := cfg.GetString("REDIS_URI")
+	rabbitUri := cfg.GetString("RABBIT_URI")
 
 	wbRouter := wbgin.New("release")
 
