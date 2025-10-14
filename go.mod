@@ -2,7 +2,10 @@ module github.com/Vladimirmoscow84/Delayed_Notifier.git
 
 go 1.25.1
 
-require github.com/jmoiron/sqlx v1.4.0
+require (
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/rabbitmq/amqp091-go v1.10.0
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -12,7 +15,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 )
 
