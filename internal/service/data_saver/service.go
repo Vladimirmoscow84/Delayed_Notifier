@@ -11,21 +11,19 @@ import (
 
 type DataSaver struct {
 	store store
-	cache cache
 }
 
 type store interface {
 	AddNotice(ctx context.Context, notice model.Notice) (int, error)
 }
 
-type cache interface {
-	Set(ctx context.Context, key string, value any) error
-}
+// type cache interface {
+// 	Set(ctx context.Context, key string, value any) error
+// }
 
-func New(s store, c cache) *DataSaver {
+func New(s store) *DataSaver {
 	return &DataSaver{
 		store: s,
-		cache: c,
 	}
 }
 func (s *DataSaver) SaveData(ctx context.Context, notice model.Notice) (int, error) {
