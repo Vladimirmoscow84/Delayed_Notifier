@@ -18,7 +18,8 @@ func (r *Router) addNotice(c *gin.Context) {
 		return
 	}
 
-	notice.DateCreated = time.Now()
+	now := time.Now()
+	notice.DateCreated = now
 	notice.SendAttempts = 5
 	notice.SendStatus = "sheduled"
 
@@ -26,6 +27,17 @@ func (r *Router) addNotice(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+	if r.rabbit != nil {
+		delay := time.Until(notice.SendDate)
+		if delay < 0 {
+			delay = 0
+		}
+		notice.Id = id
+		if err := r.rabbit.PublishStruct(notice, delay); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to publish message to RabbitMQ: " + err.Error()})
+			return
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }

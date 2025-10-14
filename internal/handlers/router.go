@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
+	rabbitmq "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/rabbitMq"
 	"github.com/wb-go/wbf/ginext"
 )
 
@@ -21,14 +22,16 @@ type Router struct {
 	dataSaver    dataSaver
 	statusGetter statusGetter
 	dataDeleter  dataDeleter
+	rabbit       *rabbitmq.Client
 }
 
-func New(router *ginext.Engine, dataSaver dataSaver, statusGetter statusGetter, dataDeleter dataDeleter) *Router {
+func New(router *ginext.Engine, dataSaver dataSaver, statusGetter statusGetter, dataDeleter dataDeleter, rabbitClient *rabbitmq.Client) *Router {
 	return &Router{
 		Router:       router,
 		dataSaver:    dataSaver,
 		statusGetter: statusGetter,
 		dataDeleter:  dataDeleter,
+		rabbit:       rabbitClient,
 	}
 }
 

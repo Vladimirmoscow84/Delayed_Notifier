@@ -5,6 +5,7 @@ import (
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/handlers"
+	rabbitmq "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/rabbitMq"
 	datadeleter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_deleter"
 	datasaver "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_saver"
 	statusgetter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/status_getter"
@@ -33,11 +34,26 @@ func Run() {
 	}
 	cache := cache.New(redisUri)
 
+	rabbitCfg := rabbitmq.Config{
+		RabbitUri:    rabbitUri,
+		Exchange:     "main_exchange",
+		Exchangetype: "direct",
+		Queue:        "main_queue",
+		RoutingKey:   "notices",
+		DLX:          "dlx_exchange",
+		DLQ:          "dlq_queue",
+	}
+
 	dataSaverService := datasaver.New(store, cache)
 	statusGetterService := statusgetter.New(cache)
 	dataDeleterService := datadeleter.New(cache)
+	rabbitClient, err := rabbitmq.New(rabbitCfg)
+	if err != nil {
+		log.Fatalf("failed connect to RabbitMQ: %v", err)
+	}
+	defer rabbitClient.Close()
 
-	router := handlers.New(wbRouter, dataSaverService, statusGetterService, dataDeleterService)
+	router := handlers.New(wbRouter, dataSaverService, statusGetterService, dataDeleterService, rabbitClient)
 	router.Routers()
 
 	err = router.Router.Run(addr)

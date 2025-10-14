@@ -36,3 +36,12 @@ func (c *Cache) Set(ctx context.Context, key string, value any) error {
 func (c *Cache) Del(ctx context.Context, key string) error {
 	return c.client.Del(ctx, key)
 }
+
+// Exists - проверяет наличие записей в кэш по ключу
+func (c *Cache) Exists(ctx context.Context, key string) (bool, error) {
+	count, err := c.client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
