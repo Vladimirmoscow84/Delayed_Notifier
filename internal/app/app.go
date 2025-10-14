@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log"
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
@@ -9,6 +10,7 @@ import (
 	datadeleter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_deleter"
 	datasaver "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_saver"
 	statusgetter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/status_getter"
+	amqp "github.com/rabbitmq/amqp091-go"
 	wbconfig "github.com/wb-go/wbf/config"
 	wbgin "github.com/wb-go/wbf/ginext"
 	"github.com/wb-go/wbf/redis"
@@ -17,12 +19,12 @@ import (
 func Run() {
 	//ctx := context.Background()
 	cfg := wbconfig.New()
-	err := cfg.Load("", "../.env", "")
+	err := cfg.Load("../config.yaml", "../.env", "")
 	if err != nil {
 		log.Fatalf("load cfg dissable %v", err)
 	}
 	//databaseUri := cfg.GetString("DATABASE_URI")
-	//addr := cfg.GetString("SERVER_ADDRESS")
+	addr := cfg.GetString("SERVER_ADDRESS")
 	redisUri := cfg.GetString("REDIS_URI")
 	rabbitUri := cfg.GetString("RABBIT_URI")
 
@@ -46,8 +48,8 @@ func Run() {
 	}
 
 	dataSaverService := datasaver.New(store)
-	statusGetterService := statusgetter.New(cache)
-	dataDeleterService := datadeleter.New(cache)
+	statusGetterService := statusgetter.New(store)
+	dataDeleterService := datadeleter.New(store)
 	rabbitClient, err := rabbitmq.New(rabbitCfg)
 	if err != nil {
 		log.Fatalf("failed connect to RabbitMQ: %v", err)
@@ -57,9 +59,21 @@ func Run() {
 	router := handlers.New(wbRouter, dataSaverService, statusGetterService, dataDeleterService, rabbitClient)
 	router.Routers()
 
-	err = router.Router.Run(addr)
-	if err != nil {
-		log.Fatalf("connet to server dissadled %v", err)
-	}
+	go func() {
+		log.Printf("Server is running 1")
+		err = router.Router.Run(addr)
+		if err != nil {
+			log.Fatalf("connet to server dissadled %v", err)
+		}
+		log.Printf("Server is running 2")
+	}()
 
+	handler := func(msg amqp.Delivery) {
+		log.Printf("Получено сообщение: %s", string(msg.Body))
+	}
+	err = rabbitClient.ConsumeDLQWithWorkers(context.Background(), 5, handler)
+	if err != nil {
+		log.Fatalf("failed consume with RabbitMQ: %v", err)
+	}
+	select {}
 }

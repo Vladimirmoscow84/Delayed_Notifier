@@ -9,7 +9,7 @@ import (
 )
 
 type dataSaver interface {
-	SaveData(ctx context.Context, notice model.Notice) (int, error)
+	SaveData(ctx context.Context, notice model.Notice) error
 }
 type statusGetter interface {
 	GetStatusNotice(ctx context.Context, id string) (string, error)

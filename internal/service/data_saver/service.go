@@ -2,11 +2,11 @@ package datasaver
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strconv"
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
+	"github.com/wb-go/wbf/retry"
 )
 
 type DataSaver struct {
@@ -14,7 +14,7 @@ type DataSaver struct {
 }
 
 type store interface {
-	AddNotice(ctx context.Context, notice model.Notice) (int, error)
+	Set(ctx context.Context, strategy retry.Strategy, key string, value any) error
 }
 
 // type cache interface {
@@ -26,15 +26,12 @@ func New(s store) *DataSaver {
 		store: s,
 	}
 }
-func (s *DataSaver) SaveData(ctx context.Context, notice model.Notice) (int, error) {
-	id, err := s.store.AddNotice(ctx, notice)
+func (s *DataSaver) SaveData(ctx context.Context, notice model.Notice) error {
+	str := retry.Strategy{}
+	idStr := strconv.Itoa(notice.Id)
+	err := s.store.Set(ctx, str, idStr, notice.SendStatus)
 	if err != nil {
-		return 0, fmt.Errorf("[data_saver] failed to add notice: %w", err)
+		log.Printf("[data_saver] failed to add cache: %v", err)
 	}
-	idStr := strconv.Itoa(id)
-	err = s.cache.Set(ctx, idStr, notice.SendStatus)
-	if err != nil {
-		log.Printf("[data_saver] failed to add cache: %w", err)
-	}
-	return id, nil
+	return nil
 }
