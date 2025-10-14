@@ -29,7 +29,6 @@ func (r *Router) addNotice(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-<<<<<<< HEAD
 
 	sd := notice.SendDate.String()
 	fmt.Printf("sd: %s\n", sd)
@@ -44,7 +43,7 @@ func (r *Router) addNotice(c *gin.Context) {
 
 	fmt.Printf("notice: %v\n", notice)
 
-	err = r.store.Cache.Set(ctx, sd, &notice)
+	err = r.dataSaver.cache.Set(ctx, sd, &notice)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -58,7 +57,6 @@ func (r *Router) addNotice(c *gin.Context) {
 
 	fmt.Printf("newNotice: %v\n", *newNotice)
 
-=======
 	if r.rabbit != nil {
 		delay := time.Until(notice.SendDate)
 		if delay < 0 {
@@ -70,6 +68,5 @@ func (r *Router) addNotice(c *gin.Context) {
 			return
 		}
 	}
->>>>>>> interfaces
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }

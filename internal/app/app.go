@@ -9,9 +9,9 @@ import (
 	datadeleter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_deleter"
 	datasaver "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_saver"
 	statusgetter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/status_getter"
-	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/storage"
 	wbconfig "github.com/wb-go/wbf/config"
 	wbgin "github.com/wb-go/wbf/ginext"
+	"github.com/wb-go/wbf/redis"
 )
 
 func Run() {
@@ -21,18 +21,19 @@ func Run() {
 	if err != nil {
 		log.Fatalf("load cfg dissable %v", err)
 	}
-	databaseUri := cfg.GetString("DATABASE_URI")
-	addr := cfg.GetString("SERVER_ADDRESS")
+	//databaseUri := cfg.GetString("DATABASE_URI")
+	//addr := cfg.GetString("SERVER_ADDRESS")
 	redisUri := cfg.GetString("REDIS_URI")
 	rabbitUri := cfg.GetString("RABBIT_URI")
 
 	wbRouter := wbgin.New("release")
 
-	store, err := storage.New(databaseUri)
-	if err != nil {
-		log.Fatalf("dissable connet to storage %v", err)
-	}
-	cache := cache.New(redisUri)
+	// store, err := storage.New(databaseUri,)
+	// if err != nil {
+	// 	log.Fatalf("dissable connet to storage %v", err)
+	// }
+	rd := redis.New(redisUri, "", 0)
+	store := cache.NewCache(rd)
 
 	rabbitCfg := rabbitmq.Config{
 		RabbitUri:    rabbitUri,
@@ -44,7 +45,7 @@ func Run() {
 		DLQ:          "dlq_queue",
 	}
 
-	dataSaverService := datasaver.New(store, cache)
+	dataSaverService := datasaver.New(store)
 	statusGetterService := statusgetter.New(cache)
 	dataDeleterService := datadeleter.New(cache)
 	rabbitClient, err := rabbitmq.New(rabbitCfg)
