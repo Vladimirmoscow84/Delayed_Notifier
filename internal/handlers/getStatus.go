@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -16,11 +15,10 @@ func (r *Router) getStatus(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or missing ID parametr of notice"})
 		return
 	}
-	notice, err := r.store.GetNotice(ctx, id)
+	statusNotice, err := r.statusGetter.GetStatusNotice(ctx, idStr)
 	if err != nil {
-		log.Printf("error fetching notice by ID = %d: %v\n", id, err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed getting status notice by ID"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, notice.SendStatus)
+	c.JSON(http.StatusOK, gin.H{"sendStatus": statusNotice})
 }

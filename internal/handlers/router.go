@@ -4,21 +4,34 @@ import (
 	"context"
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
+	rabbitmq "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/rabbitMq"
 	"github.com/wb-go/wbf/ginext"
 )
 
-type service interface {
+type dataSaver interface {
 	SaveData(ctx context.Context, notice model.Notice) (int, error)
 }
+type statusGetter interface {
+	GetStatusNotice(ctx context.Context, id string) (string, error)
+}
+type dataDeleter interface {
+	DeleteData(ctx context.Context, id string) error
+}
 type Router struct {
-	Router  *ginext.Engine
-	service service
+	Router       *ginext.Engine
+	dataSaver    dataSaver
+	statusGetter statusGetter
+	dataDeleter  dataDeleter
+	rabbit       *rabbitmq.Client
 }
 
-func New(router *ginext.Engine, service service) *Router {
+func New(router *ginext.Engine, dataSaver dataSaver, statusGetter statusGetter, dataDeleter dataDeleter, rabbitClient *rabbitmq.Client) *Router {
 	return &Router{
-		Router:  router,
-		service: service,
+		Router:       router,
+		dataSaver:    dataSaver,
+		statusGetter: statusGetter,
+		dataDeleter:  dataDeleter,
+		rabbit:       rabbitClient,
 	}
 }
 

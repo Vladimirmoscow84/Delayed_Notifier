@@ -17,12 +17,11 @@ func (r *Router) deleteNotice(c *gin.Context) {
 		return
 	}
 
-	err = r.store.DeleteNotice(ctx, id)
+	err = r.dataDeleter.DeleteData(ctx, idStr)
 	if err != nil {
 		log.Printf("error deleting notice by ID=%d: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "an internal error while deleting the notice by ID"})
 		return
 	}
-
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusOK, gin.H{"idStr": "notice has successfully deleted by ID from redis"})
 }

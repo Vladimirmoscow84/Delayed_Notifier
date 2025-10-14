@@ -9,7 +9,7 @@ import (
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
 )
 
-type Service struct {
+type DataSaver struct {
 	store store
 	cache cache
 }
@@ -22,13 +22,13 @@ type cache interface {
 	Set(ctx context.Context, key string, value any) error
 }
 
-func New(s store, c cache) *Service {
-	return &Service{
+func New(s store, c cache) *DataSaver {
+	return &DataSaver{
 		store: s,
 		cache: c,
 	}
 }
-func (s *Service) SaveData(ctx context.Context, notice model.Notice) (int, error) {
+func (s *DataSaver) SaveData(ctx context.Context, notice model.Notice) (int, error) {
 	id, err := s.store.AddNotice(ctx, notice)
 	if err != nil {
 		return 0, fmt.Errorf("[data_saver] failed to add notice: %w", err)

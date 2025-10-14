@@ -30,3 +30,17 @@ func (c *Cache) Get(ctx context.Context, strategy retry.Strategy, key string) (s
 func (c *Cache) Set(ctx context.Context, strategy retry.Strategy, key string, value any) error {
 	return c.client.SetWithRetry(ctx, c.strategy, key, value)
 }
+
+// Del - удаляет значение из кэш
+func (c *Cache) Del(ctx context.Context, key string) error {
+	return c.client.Del(ctx, key)
+}
+
+// Exists - проверяет наличие записей в кэш по ключу
+func (c *Cache) Exists(ctx context.Context, key string) (bool, error) {
+	count, err := c.client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
