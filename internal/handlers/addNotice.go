@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -23,12 +24,13 @@ func (r *Router) addNotice(c *gin.Context) {
 	notice.DateCreated = now
 	notice.SendAttempts = 5
 	notice.SendStatus = "sheduled"
-
+	fmt.Println("[REDIS]Отправка в базу")
 	err := r.dataSaver.SaveData(ctx, notice)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	fmt.Println("[REDIS]Отправка в базу завершена")
 
 	// sd := notice.SendDate.String()
 	// fmt.Printf("sd: %s\n", sd)
@@ -62,10 +64,12 @@ func (r *Router) addNotice(c *gin.Context) {
 		if delay < 0 {
 			delay = 0
 		}
+		fmt.Println("[RABBITMQ]Отправка на рассылку")
 		if err := r.rabbit.PublishStruct(notice, delay); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to publish message to RabbitMQ: " + err.Error()})
 			return
 		}
+		fmt.Println("[RABBITMQ]Отправка на рассылку прошла успешно")
 	}
 	c.JSON(http.StatusOK, gin.H{"id": strconv.Itoa(notice.Id)})
 }

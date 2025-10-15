@@ -7,6 +7,7 @@ import (
 
 type cache interface {
 	Del(ctx context.Context, key string) error
+	Exists(ctx context.Context, key string) (bool, error)
 }
 
 type DataDeleter struct {
@@ -18,7 +19,14 @@ func New(c cache) *DataDeleter {
 }
 
 func (s *DataDeleter) DeleteData(ctx context.Context, key string) error {
-	err := s.cache.Del(ctx, key)
+	exists, err := s.cache.Exists(ctx, key)
+	if err != nil {
+		return fmt.Errorf("[data_deleter] failed to check cache key: %w", err)
+	}
+	if !exists {
+		return fmt.Errorf("[status_deleter] key %q not found in cache", key)
+	}
+	err = s.cache.Del(ctx, key)
 	if err != nil {
 		return fmt.Errorf("[data_deleter] failed to delete notice from cache by ID: %w", err)
 	}

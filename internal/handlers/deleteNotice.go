@@ -23,5 +23,5 @@ func (r *Router) deleteNotice(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "an internal error while deleting the notice by ID"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"idStr": "notice has successfully deleted by ID from redis"})
+	c.JSON(http.StatusOK, gin.H{idStr: "notice has successfully deleted by ID from redis"})
 }
