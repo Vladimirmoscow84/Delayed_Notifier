@@ -1,14 +1,12 @@
 package email
 
 import (
-	"bytes"
+	"fmt"
 	"log"
 	"net/smtp"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
 )
 
 type Client struct {
@@ -42,37 +40,35 @@ func New(host, portStr, user, pass, from, toList string) *Client {
 }
 
 // Send - отправка уведомления по email
-func (c *Client) Send(notice model.Notice) {
+func (c *Client) Send(subject, body string) error {
 	if c == nil {
-		return
+		return fmt.Errorf("[email] client is empty")
 	}
-	subject := "Notification ID=" + strconv.Itoa(notice.Id)
-	body := "Уведомление ID=" + strconv.Itoa(notice.Id) + "\n\n" +
-		notice.Body + "\n\nЗапланировано: " + notice.SendDate.Format(time.RFC3339)
-
-	msg := bytes.Buffer{}
-	msg.WriteString("From: " + c.from + "\r\n")
-	msg.WriteString("To: " + strings.Join(c.to, ",") + "\r\n")
-	msg.WriteString("Subject: " + subject + "\r\n")
-	msg.WriteString("MIME-Version: 1.0\r\n")
-	msg.WriteString("Content-Type: text/plain; charset=\"utf-8\"\r\n")
-	msg.WriteString("\r\n")
-	msg.WriteString(body)
+	if len(c.to) == 0 {
+		return fmt.Errorf("[email] no recipients in EMAIL_TO")
+	}
 
 	auth := smtp.PlainAuth("", c.user, c.pass, c.host)
+	msg := fmt.Sprintf("From: %s\r\n", c.from)
+	msg += fmt.Sprintf("To: %s\r\n", strings.Join(c.to, ","))
+	msg += fmt.Sprintf("Subject: %s\r\n", subject)
+	msg += "MIME-version: 1.0;\r\n"
+	msg += "Content-Type: text/plain; charset=\"UTF-8\";\r\n\r\n"
+	msg += body
+
 	addr := c.host + ":" + strconv.Itoa(c.port)
 
-	maxAttempts := notice.SendAttempts
-	backoff := time.Second * 1
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		err := smtp.SendMail(addr, auth, c.from, c.to, msg.Bytes())
+	backoff := 1 * time.Second
+	for attempt := 1; attempt <= 3; attempt++ {
+		err := smtp.SendMail(addr, auth, c.from, c.to, []byte(msg))
 		if err == nil {
-			log.Printf("[Email] notice ID=%d sent", notice.Id)
-			return
+			log.Printf("[Email] successfully sended")
+			return nil
 		}
 		log.Printf("[Email] attempt %d failed: %v", attempt, err)
 		time.Sleep(backoff)
 		backoff *= 2
 	}
-	log.Printf("[Email] notice ID=%d failed after %d attempts", notice.Id, maxAttempts)
+	log.Printf("[Email] send failed after all attempts")
+	return fmt.Errorf("[email] failed send to email")
 }

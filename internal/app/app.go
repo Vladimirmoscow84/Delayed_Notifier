@@ -3,11 +3,9 @@ package app
 import (
 	"context"
 	"log"
-	"time"
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/handlers"
-	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/model"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/notifier/email"
 	rabbitmq "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/rabbitMq"
 	datadeleter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_deleter"
@@ -41,17 +39,8 @@ func Run() {
 
 	//--------ТЕСТ ПОЧТЫ ---------
 	client := email.New(eHost, ePort, eUser, ePass, eFrom, eTo)
-	sendTime, _ := time.Parse(time.RFC3339, "2025-10-15T07:03:00Z")
-	notice := model.Notice{
-		Id:           123,
-		Body:         "sosi",
-		DateCreated:  sendTime,
-		SendDate:     sendTime,
-		SendAttempts: 3,
-		SendStatus:   "fdhbvdhfd",
-	}
 
-	client.Send(notice)
+	client.Send("Test message", "V'ebi emu poka ryadom")
 	if err != nil {
 		log.Fatalf("Ошибка отправки письма: %v", err)
 	}
