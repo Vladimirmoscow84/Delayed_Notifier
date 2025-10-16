@@ -7,6 +7,7 @@ import (
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/handlers"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/notifier/email"
+	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/notifier/telegram"
 	rabbitmq "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/rabbitMq"
 	datadeleter "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_deleter"
 	datasaver "github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/service/data_saver"
@@ -34,6 +35,8 @@ func Run() {
 	ePass := cfg.GetString("EMAIL_PASS")
 	eFrom := cfg.GetString("EMAIL_FROM")
 	eTo := cfg.GetString("EMAIL_TO")
+	tToken := cfg.GetString("TELEGRAM_TOKEN")
+	tChatID := cfg.GetInt("TELEGRAM_CHAT_ID")
 
 	wbRouter := wbgin.New("release")
 
@@ -44,7 +47,12 @@ func Run() {
 	if err != nil {
 		log.Fatalf("Ошибка отправки письма: %v", err)
 	}
-
+	//----- ТЕСТ ТЕЛЕГИ-------------
+	tclient, _ := telegram.New(tToken, int64(tChatID))
+	tclient.Send("Прими сообщение от Go")
+	if err != nil {
+		log.Fatalf("Ошибка отправки в телегу: %v", err)
+	}
 	// store, err := storage.New(databaseUri,)
 	// if err != nil {
 	// 	log.Fatalf("dissable connet to storage %v", err)
