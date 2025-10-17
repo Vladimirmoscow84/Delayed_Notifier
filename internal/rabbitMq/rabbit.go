@@ -163,26 +163,26 @@ func (c *Client) Publish(msg Message) error {
 	)
 }
 
-// PublishStruct автоматически сериализует структуру в JSON и публикует сообщение
+// PublishStruct автоматически сериализует структуру в JSON и публикует сообщение.
 func (c *Client) PublishStructWithTTL(data interface{}, ttl time.Duration) error {
 	if err := c.ensurePubChannel(); err != nil {
-		return fmt.Errorf("failed to ensure publish channel: %w", err)
+		return fmt.Errorf("[RabbitMQ]failed to ensure publish channel: %w", err)
 	}
 
 	if ttl <= 0 {
-		return fmt.Errorf("invalid TTL: must be positive, got %v", ttl)
+		return fmt.Errorf("[RabbitMQ]invalid TTL: must be positive, got %v", ttl)
 	}
 
 	body, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("failed to marshal struct: %w", err)
+		return fmt.Errorf("[RabbitMQ]failed to marshal struct: %w", err)
 	}
 
 	queueName := fmt.Sprintf("msg_%d", time.Now().UnixNano())
 
 	tempQueue, err := c.DeclareTempQueue(queueName, ttl)
 	if err != nil {
-		return fmt.Errorf("failed to declare temp queue: %w", err)
+		return fmt.Errorf("[RabbitMQ]failed to declare temp queue: %w", err)
 	}
 
 	if err := c.publicChannel.QueueBind(
@@ -192,7 +192,7 @@ func (c *Client) PublishStructWithTTL(data interface{}, ttl time.Duration) error
 		false,
 		nil,
 	); err != nil {
-		return fmt.Errorf("failed to bind temp queue %q: %w", tempQueue, err)
+		return fmt.Errorf("[RabbitMQ]failed to bind temp queue %q: %w", tempQueue, err)
 	}
 
 	expiration := fmt.Sprintf("%d", ttl.Milliseconds())
@@ -208,7 +208,7 @@ func (c *Client) PublishStructWithTTL(data interface{}, ttl time.Duration) error
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to publish message to temp queue %q: %w", tempQueue, err)
+		return fmt.Errorf("[RabbitMQ]failed to publish message to temp queue %q: %w", tempQueue, err)
 	}
 
 	return nil
@@ -221,23 +221,23 @@ func (c *Client) ensurePubChannel() error {
 
 	ch, err := c.conn.Channel()
 	if err != nil {
-		return fmt.Errorf("failed to reopen publish channel: %w", err)
+		return fmt.Errorf("[RabbitMQ]failed to reopen publish channel: %w", err)
 	}
 
 	c.publicChannel = ch
 	return nil
 }
 
-// DeclareTempQueue creates a temporary queue with a specific TTL and auto-delete flag.
+// DeclareTempQueue создает временную очередь с определенным TTL и флагом автоматического удаления.
 func (c *Client) DeclareTempQueue(name string, ttl time.Duration) (string, error) {
 	ms := ttl.Milliseconds()
 	if ms <= 0 {
-		return "", fmt.Errorf("invalid TTL: must be positive, got %d ms", ms)
+		return "", fmt.Errorf("[RabbitMQ]invalid TTL: must be positive, got %d ms", ms)
 	}
 
 	exp := ms + 5000
 	if exp <= 0 {
-		return "", fmt.Errorf("invalid x-expires: overflow or negative value (%d)", exp)
+		return "", fmt.Errorf("[RabbitMQ]invalid x-expires: overflow or negative value (%d)", exp)
 	}
 
 	args := amqp.Table{
@@ -255,23 +255,23 @@ func (c *Client) DeclareTempQueue(name string, ttl time.Duration) (string, error
 		args,
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to declare temp queue %q: %w", name, err)
+		return "", fmt.Errorf("[RabbitMQ]failed to declare temp queue %q: %w", name, err)
 	}
 
 	return q.Name, nil
 }
 
-// Ack acknowledges a message.
+// Ack подтверждения сообщения.
 func (c *Client) Ack(msg amqp.Delivery) error {
 	return msg.Ack(false)
 }
 
-// Nack negatively acknowledges a message.
+// Nack отрицательное подтверждение сообщения.
 func (c *Client) Nack(msg amqp.Delivery) error {
 	return msg.Nack(false, false)
 }
 
-// Close closes both channels and the connection.
+// Close закрывает оба канала и подключение.
 func (c *Client) Close() error {
 	if c.publicChannel != nil {
 		c.publicChannel.Close()
@@ -285,7 +285,7 @@ func (c *Client) Close() error {
 	return nil
 }
 
-// ConsumeDLQWithWorkers consumes messages from DLQ with a worker pool and context for graceful shutdown.
+// ConsumeDLQWithWorkers использует сообщения из DLQ с рабочим пулом и контекстом для плавного завершения работы.
 func (c *Client) ConsumeDLQWithWorkers(ctx context.Context, workerCount int, handler func(msg amqp.Delivery)) error {
 	if workerCount <= 0 {
 		workerCount = 1
@@ -296,14 +296,14 @@ func (c *Client) ConsumeDLQWithWorkers(ctx context.Context, workerCount int, han
 	msgs, err := c.consumerChannel.Consume(
 		c.config.DLQ,
 		consumerTag,
-		false, // manual ack
+		false,
 		false,
 		false,
 		false,
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to consume from DLQ: %w", err)
+		return fmt.Errorf("[RabbitMQ]failed to consume from DLQ: %w", err)
 	}
 
 	queue := make(chan amqp.Delivery, workerCount*2)
@@ -338,20 +338,20 @@ func (c *Client) ConsumeDLQWithWorkers(ctx context.Context, workerCount int, han
 
 	go func() {
 		<-ctx.Done()
-		_ = c.CancelConsumer(consumerTag) // gracefully cancel consumer
+		_ = c.CancelConsumer(consumerTag) // корректное отключение пользователя
 		_ = c.consumerChannel.Close()
 	}()
 
 	return nil
 }
 
-// CancelConsumer gracefully cancels a consumer by tag.
+// CancelConsumer корректно отменяет использование пользователя по тегу.
 func (c *Client) CancelConsumer(consumerTag string) error {
 	if c.consumerChannel == nil {
-		return fmt.Errorf("consumer channel is nil")
+		return fmt.Errorf("[RabbitMQ]consumer channel is nil")
 	}
 	if err := c.consumerChannel.Cancel(consumerTag, false); err != nil {
-		return fmt.Errorf("failed to cancel consumer: %w", err)
+		return fmt.Errorf("[RabbitMQ]failed to cancel consumer: %w", err)
 	}
 	return nil
 }
