@@ -10,6 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Структура уведомления, отправляемая в RabbitMQ.
+type NotifyMessage struct {
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
+
 func (r *Router) addNotice(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -32,44 +38,37 @@ func (r *Router) addNotice(c *gin.Context) {
 	}
 	fmt.Println("[REDIS]Отправка в базу завершена")
 
-	// sd := notice.SendDate.String()
-	// fmt.Printf("sd: %s\n", sd)
-	// t, err := time.Parse("2006-01-02 15:04:05 -0700 UTC", sd)
-	// if err != nil {
-	// 	fmt.Printf("error parsing time: %v\n", err)
-	// } else {
-	// 	fmt.Printf("t: %v\n", t)
-	// }
-
-	// notice.Id = id
-
-	// fmt.Printf("notice: %v\n", notice)
-
-	// err = r.dataSaver.SaveData(ctx, sd, &notice)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
-	// newNotice, err := r.store.Cache.Get(ctx, sd)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
-	// fmt.Printf("newNotice: %v\n", *newNotice)
-
 	if r.rabbit != nil {
 		delay := time.Until(notice.SendDate)
 		if delay < 0 {
 			delay = 0
 		}
 		fmt.Println("[RABBITMQ]Отправка на рассылку")
-		if err := r.rabbit.PublishStruct(notice, delay); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to publish message to RabbitMQ: " + err.Error()})
-			return
+
+		if r.rabbit != nil {
+			fmt.Printf("[RABBITMQ] Публикация уведомления с задержкой %v...\n", delay)
+
+			subject := fmt.Sprintf("Уведомление №%d", notice.Id)
+			msg := NotifyMessage{
+				Subject: subject,
+				Body:    notice.Body,
+			}
+
+			err := r.rabbit.PublishStructWithTTL(msg, delay)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "failed to publish message to RabbitMQ: " + err.Error(),
+				})
+				return
+			}
+
+			fmt.Println("[RABBITMQ] Публикация успешна.")
 		}
-		fmt.Println("[RABBITMQ]Отправка на рассылку прошла успешно")
+
+		c.JSON(http.StatusOK, gin.H{
+			"id":      strconv.Itoa(notice.Id),
+			"status":  "scheduled",
+			"send_at": notice.SendDate.Format(time.RFC3339),
+		})
 	}
-	c.JSON(http.StatusOK, gin.H{"id": strconv.Itoa(notice.Id)})
 }
