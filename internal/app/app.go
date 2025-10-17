@@ -2,7 +2,11 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/cache"
 	"github.com/Vladimirmoscow84/Delayed_Notifier.git/internal/handlers"
@@ -18,14 +22,19 @@ import (
 	"github.com/wb-go/wbf/redis"
 )
 
+// структура полезной нагрузки из RabbitMQ.
+type NotifyMessage struct {
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
+
 func Run() {
-	//ctx := context.Background()
 	cfg := wbconfig.New()
 	err := cfg.Load("../config.yaml", "../.env", "")
 	if err != nil {
-		log.Fatalf("load cfg dissable %v", err)
+		log.Fatalf("[main]load cfg dissable %v", err)
 	}
-	//databaseUri := cfg.GetString("DATABASE_URI")
+
 	addr := cfg.GetString("SERVER_ADDRESS")
 	redisUri := cfg.GetString("REDIS_URI")
 	rabbitUri := cfg.GetString("RABBIT_URI")
@@ -37,29 +46,27 @@ func Run() {
 	eTo := cfg.GetString("EMAIL_TO")
 	tToken := cfg.GetString("TELEGRAM_TOKEN")
 	tChatID := cfg.GetInt("TELEGRAM_CHAT_ID")
+	// Инициализация уведомлений для email.
+	emailClient := email.New(eHost, ePort, eUser, ePass, eFrom, eTo)
 
-	wbRouter := wbgin.New("release")
-
-	//--------ТЕСТ ПОЧТЫ ---------
-	client := email.New(eHost, ePort, eUser, ePass, eFrom, eTo)
-
-	client.Send("Test message", "V'ebi emu poka ryadom")
-	if err != nil {
-		log.Fatalf("Ошибка отправки письма: %v", err)
+	// Инициализация уведомлений для telegram.
+	var telegramClient *telegram.Client
+	if tToken != "" && tChatID != 0 {
+		tclient, err := telegram.New(tToken, int64(tChatID))
+		if err != nil {
+			log.Printf("[telega] init failed: %v", err)
+		} else {
+			telegramClient = tclient
+		}
+	} else {
+		log.Printf("[telega] config missing, telegram disabled")
 	}
-	//----- ТЕСТ ТЕЛЕГИ-------------
-	tclient, _ := telegram.New(tToken, int64(tChatID))
-	tclient.Send("Прими сообщение от Go")
-	if err != nil {
-		log.Fatalf("Ошибка отправки в телегу: %v", err)
-	}
-	// store, err := storage.New(databaseUri,)
-	// if err != nil {
-	// 	log.Fatalf("dissable connet to storage %v", err)
-	// }
+
+	// Инициализация кэш и redis.
 	rd := redis.New(redisUri, "", 0)
 	store := cache.NewCache(rd)
 
+	// Конфиг RabbitMQ.
 	rabbitCfg := rabbitmq.Config{
 		RabbitUri:    rabbitUri,
 		Exchange:     "main_exchange",
@@ -70,6 +77,7 @@ func Run() {
 		DLQ:          "dlq_queue",
 	}
 
+	//Инициализация сервисов приложения.
 	dataSaverService := datasaver.New(store)
 	statusGetterService := statusgetter.New(store)
 	dataDeleterService := datadeleter.New(store)
@@ -79,25 +87,75 @@ func Run() {
 	}
 	defer rabbitClient.Close()
 
+	wbRouter := wbgin.New("release")
 	router := handlers.New(wbRouter, dataSaverService, statusGetterService, dataDeleterService, rabbitClient)
 	router.Routers()
 
+	//Запуск HTTP сервера.
 	go func() {
-		log.Printf("Server is running 1")
+		log.Printf("Server is running ")
 		err = router.Router.Run(addr)
 		if err != nil {
-			log.Fatalf("connet to server dissadled %v", err)
+			log.Fatalf("[main]connet to server dissadled %v", err)
 		}
-		log.Printf("Server is running 2")
 	}()
 
-	handler := func(msg amqp.Delivery) {
-		log.Printf("Получено сообщение: %s", string(msg.Body))
-	}
-	err = rabbitClient.ConsumeDLQWithWorkers(context.Background(), 5, handler)
-	if err != nil {
-		log.Fatalf("failed consume with RabbitMQ: %v", err)
-	}
-	select {}
+	//Контекст завершения.
+	ctx, cancel := context.WithCancel(context.Background())
+	go handleShutdown(cancel)
 
+	//Обработчик сообщений из DLQ.
+	handler := func(msg amqp.Delivery) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[handler] panic recovered: %v", r)
+				_ = rabbitClient.Nack(msg)
+			}
+		}()
+
+		var data NotifyMessage
+		if err := json.Unmarshal(msg.Body, &data); err != nil {
+			log.Printf("[handler] bad message JSON: %v", err)
+			_ = rabbitClient.Nack(msg)
+			return
+		}
+
+		log.Printf("[handler] received message: %+v", data)
+
+		//Отправка уведомлений в телегу и на почту.
+		if emailClient != nil {
+			if err := emailClient.Send(data.Subject, data.Body); err != nil {
+				log.Printf("[email] send error: %v", err)
+			}
+		}
+
+		if telegramClient != nil {
+			if err := telegramClient.Send(data.Body); err != nil {
+				log.Printf("[telega] send error: %v", err)
+			}
+		}
+
+		//Подтверждение удачной обработки.
+		_ = rabbitClient.Ack(msg)
+	}
+
+	//Запуск воркеров для DLQ.
+	err = rabbitClient.ConsumeDLQWithWorkers(ctx, 5, handler)
+	if err != nil {
+		log.Fatalf("failed consume from RabbitMQ DLQ: %v", err)
+	}
+
+	log.Println("[main] Application started. Waiting for messages...")
+
+	<-ctx.Done()
+	log.Println("[main] graceful shutdown complete.")
+}
+
+// Graceful shutdown при SIGINT/SIGTERM.
+func handleShutdown(cancel context.CancelFunc) {
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
+	log.Println("[main] shutdown signal received")
+	cancel()
 }
