@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -106,13 +107,6 @@ func Run() {
 
 	//Обработчик сообщений из DLQ.
 	handler := func(msg amqp.Delivery) {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("[handler] panic recovered: %v", r)
-				_ = rabbitClient.Nack(msg)
-			}
-		}()
-
 		var data NotifyMessage
 		if err := json.Unmarshal(msg.Body, &data); err != nil {
 			log.Printf("[handler] bad message JSON: %v", err)
@@ -121,7 +115,7 @@ func Run() {
 		}
 
 		log.Printf("[handler] received message: %+v", data)
-
+		fmt.Println(data.Subject, "-----", data.Body)
 		//Отправка уведомлений в телегу и на почту.
 		if emailClient != nil {
 			if err := emailClient.Send(data.Subject, data.Body); err != nil {
