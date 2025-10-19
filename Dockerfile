@@ -1,11 +1,14 @@
 FROM golang:1.25.1-alpine AS builder
 
 WORKDIR /app
-COPY . .
-
+RUN go.mod go.sum ./
 RUN go mod download
 
-RUN go build -o delayed_notifier ./cmd/app
+COPY . .
+
+
+
+RUN go build -o delayed_notifier ./cmd
 
 FROM alpine:latest
 WORKDIR /root/
