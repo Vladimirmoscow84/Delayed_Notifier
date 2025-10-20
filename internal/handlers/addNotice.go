@@ -12,8 +12,9 @@ import (
 
 // Структура уведомления, отправляемая в RabbitMQ.
 type NotifyMessage struct {
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
+	Subject string    `json:"subject"`
+	Body    string    `json:"body"`
+	SendAt  time.Time `json:"send_at"`
 }
 
 func (r *Router) addNotice(c *gin.Context) {
@@ -22,7 +23,7 @@ func (r *Router) addNotice(c *gin.Context) {
 	var notice model.Notice
 
 	if err := c.ShouldBindJSON(&notice); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invlid input data."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input data."})
 		return
 	}
 
@@ -52,6 +53,7 @@ func (r *Router) addNotice(c *gin.Context) {
 			msg := NotifyMessage{
 				Subject: subject,
 				Body:    notice.Body,
+				SendAt:  notice.SendDate,
 			}
 
 			err := r.rabbit.PublishStructWithTTL(msg, delay)

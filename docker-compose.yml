@@ -12,6 +12,8 @@ services:
       - redis
       - rabbitmq
     restart: unless-stopped
+    volumes:
+      - ./web:/app/web
 
 
   redis:

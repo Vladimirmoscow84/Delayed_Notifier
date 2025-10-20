@@ -65,7 +65,6 @@
   <pre id="result">Результат будет здесь</pre>
 
   <script>
-    const apiBase = "/notify"; // путь к API
     const resultBox = document.getElementById("result");
 
     // === Создание уведомления ===
@@ -76,15 +75,18 @@
 
       if (!subject || !body || !sendAt) return alert("Заполните все поля");
 
+      // Приводим к ISO8601, чтобы сервер точно понял дату
+      const sendAtISO = new Date(sendAt).toISOString();
+
       try {
-        const res = await fetch(apiBase, {
+        const res = await fetch("/notify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subject, body, send_at: sendAt })
+          body: JSON.stringify({ subject, body, send_at: sendAtISO })
         });
         const data = await res.json();
         if (res.ok) {
-          resultBox.textContent = `Уведомление создано!\nID: ${data.id}\n\nПолные данные:\n${JSON.stringify(data, null, 2)}`;
+          resultBox.textContent = `Уведомление создано!\nID: ${data.id}\n\n${JSON.stringify(data, null, 2)}`;
         } else {
           resultBox.textContent = `Ошибка: ${data.error || 'неизвестная'}`;
         }
@@ -99,7 +101,7 @@
       if (!id) return alert("Введите ID уведомления");
 
       try {
-        const res = await fetch(`${apiBase}/${id}`);
+        const res = await fetch(`/notify/${id}`);
         const text = await res.text();
         resultBox.textContent = `GET /notify/${id}\n\n${text}`;
       } catch (err) {
@@ -114,7 +116,7 @@
       if (!confirm(`Удалить уведомление ${id}?`)) return;
 
       try {
-        const res = await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+        const res = await fetch(`/notify/${id}`, { method: "DELETE" });
         const text = await res.text();
         resultBox.textContent = `DELETE /notify/${id}\n\n${text}`;
       } catch (err) {
