@@ -31,7 +31,7 @@ type NotifyMessage struct {
 
 func Run() {
 	cfg := wbconfig.New()
-	err := cfg.Load("../config.yaml", "../.env", "")
+	err := cfg.Load("./config.yaml", "./.env", "")
 	if err != nil {
 		log.Fatalf("[main]load cfg dissable %v", err)
 	}
