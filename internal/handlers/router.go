@@ -39,4 +39,5 @@ func (r *Router) Routers() {
 	r.Router.POST("/notify", r.addNotice)          //создание уведомлений с датой и временем отправки
 	r.Router.GET("/notify/:id", r.getStatus)       //получение статуса уведомления по  ID
 	r.Router.DELETE("/notify/:id", r.deleteNotice) //отмена запланированного уведомления по ID
+	r.Router.Static("/", "./web")
 }

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Notify Service UI</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      background: #f8f9fa;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; color: #333; }
+    label { display: block; margin-top: 20px; font-weight: bold; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; }
+    button {
+      margin-top: 20px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button#createBtn { background-color: #28a745; color: white; }
+    button#checkBtn { background-color: #007bff; color: white; margin-right: 10px; }
+    button#deleteBtn { background-color: #dc3545; color: white; }
+    pre {
+      background: #fff;
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Notify Service UI</h1>
+
+  <!-- Форма создания уведомления -->
+  <h2>Создать уведомление</h2>
+  <label>Тема:</label>
+  <input type="text" id="subject" placeholder="Введите тему">
+  <label>Сообщение:</label>
+  <textarea id="body" placeholder="Введите текст уведомления"></textarea>
+  <label>Время отправки:</label>
+  <input type="datetime-local" id="sendAt">
+  <button id="createBtn">Создать уведомление</button>
+
+  <hr>
+
+  <!-- Форма проверки и удаления по ID -->
+  <h2>Проверить/Удалить уведомление</h2>
+  <label>ID уведомления:</label>
+  <input type="text" id="notifyId" placeholder="Введите ID уведомления">
+  <div>
+    <button id="checkBtn">Проверить статус</button>
+    <button id="deleteBtn">Удалить уведомление</button>
+  </div>
+
+  <pre id="result">Результат будет здесь</pre>
+
+  <script>
+    const apiBase = "/notify"; // путь к API
+    const resultBox = document.getElementById("result");
+
+    // === Создание уведомления ===
+    document.getElementById("createBtn").addEventListener("click", async () => {
+      const subject = document.getElementById("subject").value.trim();
+      const body = document.getElementById("body").value.trim();
+      const sendAt = document.getElementById("sendAt").value;
+
+      if (!subject || !body || !sendAt) return alert("Заполните все поля");
+
+      try {
+        const res = await fetch(apiBase, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subject, body, send_at: sendAt })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          resultBox.textContent = `Уведомление создано!\nID: ${data.id}\n\nПолные данные:\n${JSON.stringify(data, null, 2)}`;
+        } else {
+          resultBox.textContent = `Ошибка: ${data.error || 'неизвестная'}`;
+        }
+      } catch (err) {
+        resultBox.textContent = "Ошибка при создании уведомления: " + err;
+      }
+    });
+
+    // === Проверка статуса ===
+    document.getElementById("checkBtn").addEventListener("click", async () => {
+      const id = document.getElementById("notifyId").value.trim();
+      if (!id) return alert("Введите ID уведомления");
+
+      try {
+        const res = await fetch(`${apiBase}/${id}`);
+        const text = await res.text();
+        resultBox.textContent = `GET /notify/${id}\n\n${text}`;
+      } catch (err) {
+        resultBox.textContent = "Ошибка при запросе: " + err;
+      }
+    });
+
+    // === Удаление уведомления ===
+    document.getElementById("deleteBtn").addEventListener("click", async () => {
+      const id = document.getElementById("notifyId").value.trim();
+      if (!id) return alert("Введите ID уведомления");
+      if (!confirm(`Удалить уведомление ${id}?`)) return;
+
+      try {
+        const res = await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+        const text = await res.text();
+        resultBox.textContent = `DELETE /notify/${id}\n\n${text}`;
+      } catch (err) {
+        resultBox.textContent = "Ошибка при удалении: " + err;
+      }
+    });
+  </script>
+</body>
+</html>
