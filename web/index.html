@@ -67,7 +67,7 @@
   <script>
     const resultBox = document.getElementById("result");
 
-    // === Создание уведомления ===
+   
     document.getElementById("createBtn").addEventListener("click", async () => {
       const subject = document.getElementById("subject").value.trim();
       const body = document.getElementById("body").value.trim();
@@ -75,7 +75,7 @@
 
       if (!subject || !body || !sendAt) return alert("Заполните все поля");
 
-      // Приводим к ISO8601, чтобы сервер точно понял дату
+      
       const sendAtISO = new Date(sendAt).toISOString();
 
       try {
@@ -95,7 +95,7 @@
       }
     });
 
-    // === Проверка статуса ===
+  
     document.getElementById("checkBtn").addEventListener("click", async () => {
       const id = document.getElementById("notifyId").value.trim();
       if (!id) return alert("Введите ID уведомления");
@@ -109,7 +109,7 @@
       }
     });
 
-    // === Удаление уведомления ===
+ 
     document.getElementById("deleteBtn").addEventListener("click", async () => {
       const id = document.getElementById("notifyId").value.trim();
       if (!id) return alert("Введите ID уведомления");
