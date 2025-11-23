@@ -220,5 +220,4 @@ docker exec -it redis_server redis-cli flushall
 
 
 
-Лицензия
-MIT © 2025 — VladimirMoscow84
+Лицензия © 2025 — VladimirMoscow84
